@@ -45,6 +45,25 @@ app.use(
   }),
 );
 
+// Authentication middleware
+function isLoggedIn(req, res, next) {
+  if (req.session && req.session.authenticated) {
+    next();
+  } else {
+    res.redirect("/login");
+  }
+}
+
+// Authorization middleware
+function isAdmin(req, res, next) {
+  if (req.session.user_type === "admin") {
+    next();
+  } else {
+    res.status(403);
+    res.render("errorMessage", { active: "none", title: "Error", errorId: 5 });
+  }
+}
+
 app.get("/", (req, res) => {
   if (req.session && req.session.authenticated) {
     res.render("index", {
@@ -147,16 +166,12 @@ app.post("/signupSubmit", async (req, res) => {
   res.redirect("/members");
 });
 
-app.get("/members", (req, res) => {
-  if (req.session && req.session.authenticated) {
-    res.render("members", {
-      name: req.session.name,
-      active: "members",
-      title: "Members",
-    });
-  } else {
-    res.redirect("/");
-  }
+app.get("/members", isLoggedIn, (req, res) => {
+  res.render("members", {
+    name: req.session.name,
+    active: "members",
+    title: "Members",
+  });
 });
 
 app.get("/logout", (req, res) => {
@@ -164,29 +179,15 @@ app.get("/logout", (req, res) => {
   res.redirect("/");
 });
 
-app.get("/admin", async (req, res) => {
-  if (
-    req.session &&
-    req.session.authenticated &&
-    req.session.user_type === "admin"
-  ) {
-    const result = await userCollection
-      .find()
-      .project({ name: 1, _id: 1 })
-      .toArray();
-    res.render("admin", { active: "admin", title: "Admin", users: result });
-  } else if (
-    req.session &&
-    req.session.authenticated &&
-    req.session.user_type === "user"
-  ) {
-    res.render("errorMessage", { active: "none", title: "Error", errorId: 5 });
-  } else {
-    res.redirect("/login");
-  }
+app.get("/admin", isLoggedIn, isAdmin, async (req, res) => {
+  const result = await userCollection
+    .find()
+    .project({ name: 1, _id: 1, user_type: 1 })
+    .toArray();
+  res.render("admin", { active: "admin", title: "Admin", users: result });
 });
 
-app.post("/promote/:id", async (req, res) => {
+app.post("/promote/:id", isLoggedIn, isAdmin, async (req, res) => {
   const userId = req.params.id;
 
   await userCollection.updateOne(
@@ -197,7 +198,7 @@ app.post("/promote/:id", async (req, res) => {
   res.redirect("/admin");
 });
 
-app.post("/demote/:id", async (req, res) => {
+app.post("/demote/:id", isLoggedIn, isAdmin, async (req, res) => {
   const userId = req.params.id;
 
   await userCollection.updateOne(
