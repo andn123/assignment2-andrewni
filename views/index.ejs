@@ -1,0 +1,36 @@
+<%- include("templates/header") %>
+<% if (loginStatus) { %> 
+    
+    <div class="col-lg-6 col-xxl-4 my-5 mx-auto d-flex flex-column align-items-center gap-2">
+    <h2>Hello, <%= name %></h2>
+    <form method="get" action="/members">
+        <button class="btn btn-outline-secondary" style="width: 180px;">
+            Go to Members Area
+        </button>
+    </form>
+
+    <form method="get" action="/logout">
+        <button class="btn btn-primary" style="width: 180px;">
+            Logout
+        </button>
+    </form>
+    </div>
+<% } else { %>
+    <div class="col-lg-6 col-xxl-4 my-5 mx-auto d-flex flex-column align-items-center gap-2">
+    <form method="get" action="/signup">
+        <button class="btn btn-outline-secondary" style="width: 180px;">
+            Sign up
+        </button>
+    </form>
+
+    <form method="get" action="/login">
+        <button class="btn btn-primary" style="width: 180px;">
+            Log in
+        </button>
+    </form>
+    </div>
+<% } %>
+
+
+
+<%- include("templates/footer") %> 

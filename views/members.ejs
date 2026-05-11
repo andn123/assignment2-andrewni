@@ -1,0 +1,23 @@
+<%- include("templates/header") %>
+<div class="container my-4">
+<h2>Hello, <%= name %></h2>
+  <div class="row text-center">
+    <div class="col-12 col-md-4 mb-3">
+      <img src="image-1.jpg" class="img-fluid" alt="Image 1">
+    </div>
+
+    <div class="col-12 col-md-4 mb-3">
+      <img src="image-2.jpg" class="img-fluid" alt="Image 2">
+    </div>
+
+    <div class="col-12 col-md-4 mb-3">
+      <img src="image-3.jpg" class="img-fluid" alt="Image 3">
+    </div>
+  </div>
+  <form method="get" action="/logout" class="d-flex justify-content-center">
+    <button class="btn btn-primary" style="width: 180px;">
+        Sign out
+    </button>
+  </form>  
+</div>
+<%- include("templates/footer") %>

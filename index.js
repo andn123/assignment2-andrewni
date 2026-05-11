@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const MongoStore = require("connect-mongo").default;
+const { ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");
 const saltRounds = 12;
 const dns = require("node:dns/promises");
@@ -12,6 +13,7 @@ const app = express();
 const Joi = require("joi");
 
 app.use(express.urlencoded({ extended: false }));
+app.set("view engine", "ejs");
 
 const mongodb_host = process.env.MONGODB_HOST;
 const mongodb_user = process.env.MONGODB_USER;
@@ -45,53 +47,18 @@ app.use(
 
 app.get("/", (req, res) => {
   if (req.session && req.session.authenticated) {
-    res.send(`
-            Hello, ${req.session.name}
-            <form method="get" action="/members">
-                <button>Go to Members Area</button>
-            </form>
-            <form method="get" action="/logout">
-                <button>Logout</button>
-            </form>    
-            `);
+    res.render("index", { loginStatus: true, name: req.session.name, active: "home", title: "Home"});
   } else {
-    res.send(`
-            <form method="get" action="/signup">
-                <button>Sign up</button>
-            </form>
-            <form method="get" action="/login">
-                <button>Log in</button>
-            </form>    
-            `);
+    res.render("index", { loginStatus: false, active: "home", title: "Home"});
   }
 });
 
 app.get("/signup", (req, res) => {
-  res.send(`
-      create user
-      <form method="post" action="/signupSubmit">
-          <input name="name" type="text" placeholder="name">
-          <br>
-          <input name="email" type="email" placeholder="email">
-          <br>
-          <input name="password" type="password" placeholder="password">
-          <br>
-          <button>Submit</button>
-      </form>  
-    `);
+  res.render("signup", {active: "signup", title: "Sign Up"});
 });
 
 app.get("/login", (req, res) => {
-  res.send(`
-      log in
-      <form method="post" action="/loginSubmit">
-          <input name="email" type="email" placeholder="email">
-          <br>
-          <input name="password" type="password" placeholder="password">
-          <br>
-          <button>Submit</button>
-      </form>  
-    `);
+  res.render("login", {active: "login", title: "Login"});
 });
 
 app.post("/loginSubmit", async (req, res) => {
@@ -105,34 +72,26 @@ app.post("/loginSubmit", async (req, res) => {
 
   const validationResult = schema.validate({ email, password });
   if (validationResult.error) {
-    res.send(`
-        ${validationResult.error.message}
-        <br><br>
-        <a href="/login">Try again</a>`);
+    res.render("errorMessage", {active: "none", errorId: 0, errorMsg: validationResult.error.message, title: "Error"});
     return;
   }
 
   const result = await userCollection
     .find({ email: email })
-    .project({ name: 1, email: 1, password: 1, _id: 1 })
+    .project({ name: 1, email: 1, password: 1, _id: 1, user_type: 1})
     .toArray();
   if (result.length != 1) {
-    res.send(`
-        User not found.
-        <br><br>
-        <a href="/login">Try again</a>`);
+    res.render("errorMessage", {active: "none", errorId: 1, title: "Error"});
     return;
   }
   if (await bcrypt.compare(password, result[0].password)) {
     req.session.authenticated = true;
     req.session.name = result[0].name;
+    req.session.user_type = result[0].user_type;
     req.session.cookie.maxAge = expireTime;
     res.redirect("/members");
   } else {
-    res.send(`
-        Invalid email/password combination.
-        <br><br>
-        <a href="/login">Try again</a>`);
+    res.render("errorMessage", {active: "none", errorId: 2, title: "Error"});
     return;
   }
 });
@@ -150,19 +109,13 @@ app.post("/signupSubmit", async (req, res) => {
 
   const validationResult = schema.validate({ name, email, password });
   if (validationResult.error) {
-    res.send(`
-        ${validationResult.error.message}
-        <br><br>
-        <a href="/signup">Try again</a>`);
+    res.render("errorMessage", {active: "none", errorId: 3, errorMsg: validationResult.error.message, title: "Error"});
     return;
   }
   const existingUser = await userCollection.findOne({ email: email });
 
   if (existingUser) {
-    res.send(`
-        Email already exists. Please use another email.
-        <br><br>
-        <a href="/signup">Try again</a>`);
+    res.render("errorMessage", {active: "none", errorId: 4, title: "Error"});
     return;
   }
 
@@ -171,6 +124,7 @@ app.post("/signupSubmit", async (req, res) => {
     name: name,
     email: email,
     password: hashedPassword,
+    user_type: "user",
   });
   req.session.authenticated = true;
   req.session.name = name;
@@ -180,14 +134,7 @@ app.post("/signupSubmit", async (req, res) => {
 
 app.get("/members", (req, res) => {
   if (req.session && req.session.authenticated) {
-    let num = Math.floor(Math.random() * 3) + 1;
-    res.send(`
-      <h1>Hello, ${req.session.name}</h1>
-      <img src="image-${num}.jpg" alt="Random Image">
-      <form method="get" action="/logout">
-        <button>Sign out</button>
-      </form>  
-      `);
+    res.render("members", {name: req.session.name, active: "members", title: "Members"})
   } else {
     res.redirect("/");
   }
@@ -198,19 +145,46 @@ app.get("/logout", (req, res) => {
   res.redirect("/");
 });
 
+app.get("/admin", async (req, res) => {
+  if (
+    req.session &&
+    req.session.authenticated &&
+    req.session.user_type === "admin"
+  ) {
+    const result = await userCollection.find().project({name: 1, _id: 1}).toArray();
+    res.render("admin", {active: "admin", title: "Admin", users: result});
+  } else {
+    res.redirect("/");
+  }
+});
+
+app.post("/promote/:id", async (req, res) => {
+  const userId = req.params.id;
+
+  await userCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $set: { user_type: "admin" } }
+  );
+
+  res.redirect("/admin");
+});
+
+app.post("/demote/:id", async (req, res) => {
+  const userId = req.params.id;
+
+  await userCollection.updateOne(
+    { _id: new ObjectId(userId) },
+    { $set: { user_type: "user" } }
+  );
+
+  res.redirect("/admin");
+});
+
 app.use(express.static(__dirname + "/public"));
 
 app.use((req, res) => {
   res.status(404);
-  res.send("Page not found - 404");
-});
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-
-  res.status(500).json({
-    error: "Internal server error",
-  });
+  res.render("404", {title: 404, active: "none"});
 });
 
 app.listen(PORT, () => {

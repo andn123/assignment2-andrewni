@@ -1,0 +1,55 @@
+<%- include("templates/header") %>
+
+<% switch (errorId) { 
+    case 0: %>
+        <div class="container d-flex justify-content-center">
+            <div class="card text-center p-4 mt-5" style="max-width: 400px; width: 100%;">
+                <h4 class="mb-3 text-danger">Error</h4>
+                <p><%= errorMsg %></p>
+                <a href="/login" class="btn btn-primary mt-3">Try again</a>
+            </div>
+        </div>
+<%      break;
+
+    case 1: %>
+        <div class="container d-flex justify-content-center">
+            <div class="card text-center p-4 mt-5" style="max-width: 400px; width: 100%;">
+                <h4 class="mb-3 text-danger">Error</h4>
+                <p>User not found.</p>
+                <a href="/login" class="btn btn-primary mt-3">Try again</a>
+            </div>
+        </div>    
+<%      break;
+
+    case 2: %>
+        <div class="container d-flex justify-content-center">
+            <div class="card text-center p-4 mt-5" style="max-width: 400px; width: 100%;">
+                <h4 class="mb-3 text-danger">Error</h4>
+                <p>Invalid email/password combination.</p>
+                <a href="/login" class="btn btn-primary mt-3">Try again</a>
+            </div>
+        </div>      
+<%      break;
+
+    case 3: %>
+        <div class="container d-flex justify-content-center">
+            <div class="card text-center p-4 mt-5" style="max-width: 400px; width: 100%;">
+                <h4 class="mb-3 text-danger">Error</h4>
+                <p><%= errorMsg %></p>
+                <a href="/login" class="btn btn-primary mt-3">Try again</a>
+            </div>
+        </div>
+<%      break;
+
+    case 4: %>
+        <div class="container d-flex justify-content-center">
+            <div class="card text-center p-4 mt-5" style="max-width: 400px; width: 100%;">
+                <h4 class="mb-3 text-danger">Error</h4>
+                <p>Email already exists. Please use another email.</p>
+                <a href="/login" class="btn btn-primary mt-3">Try again</a>
+            </div>
+        </div>
+<%      break;
+} %>
+
+<%- include("templates/footer") %>

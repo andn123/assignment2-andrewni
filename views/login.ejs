@@ -1,0 +1,21 @@
+<%- include("templates/header") %>
+
+<main class="form-signin w-25 m-auto mt-5 mb-5">
+  <form method="post" action="/loginSubmit">
+    <h1 class="h3 mb-3 fw-normal">Log In</h1>
+
+    <div class="form-floating mb-3">
+      <input name="email" type="email" class="form-control" placeholder="email" />
+      <label>Email</label>
+    </div>
+
+    <div class="form-floating mb-4">
+      <input name="password" type="password" class="form-control" placeholder="Password" />
+      <label>Password</label>
+    </div>
+
+    <button class="btn btn-primary w-100 py-2" type="submit">Submit</button>
+  </form>
+</main>
+
+<%- include("templates/footer") %>
