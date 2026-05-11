@@ -50,6 +50,15 @@
             </div>
         </div>
 <%      break;
+    case 5: %>
+        <div class="container d-flex justify-content-center">
+            <div class="card text-center p-4 mt-5" style="max-width: 400px; width: 100%;">
+                <h4 class="mb-3 text-danger">Error</h4>
+                <p>You are not authorized to view this page.</p>
+                <a href="/" class="btn btn-primary mt-3">Home</a>
+            </div>
+        </div>
+<%      break;
 } %>
 
 <%- include("templates/footer") %>

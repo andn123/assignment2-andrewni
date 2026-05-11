@@ -47,18 +47,23 @@ app.use(
 
 app.get("/", (req, res) => {
   if (req.session && req.session.authenticated) {
-    res.render("index", { loginStatus: true, name: req.session.name, active: "home", title: "Home"});
+    res.render("index", {
+      loginStatus: true,
+      name: req.session.name,
+      active: "home",
+      title: "Home",
+    });
   } else {
-    res.render("index", { loginStatus: false, active: "home", title: "Home"});
+    res.render("index", { loginStatus: false, active: "home", title: "Home" });
   }
 });
 
 app.get("/signup", (req, res) => {
-  res.render("signup", {active: "signup", title: "Sign Up"});
+  res.render("signup", { active: "signup", title: "Sign Up" });
 });
 
 app.get("/login", (req, res) => {
-  res.render("login", {active: "login", title: "Login"});
+  res.render("login", { active: "login", title: "Login" });
 });
 
 app.post("/loginSubmit", async (req, res) => {
@@ -72,16 +77,21 @@ app.post("/loginSubmit", async (req, res) => {
 
   const validationResult = schema.validate({ email, password });
   if (validationResult.error) {
-    res.render("errorMessage", {active: "none", errorId: 0, errorMsg: validationResult.error.message, title: "Error"});
+    res.render("errorMessage", {
+      active: "none",
+      errorId: 0,
+      errorMsg: validationResult.error.message,
+      title: "Error",
+    });
     return;
   }
 
   const result = await userCollection
     .find({ email: email })
-    .project({ name: 1, email: 1, password: 1, _id: 1, user_type: 1})
+    .project({ name: 1, email: 1, password: 1, _id: 1, user_type: 1 })
     .toArray();
   if (result.length != 1) {
-    res.render("errorMessage", {active: "none", errorId: 1, title: "Error"});
+    res.render("errorMessage", { active: "none", errorId: 1, title: "Error" });
     return;
   }
   if (await bcrypt.compare(password, result[0].password)) {
@@ -91,7 +101,7 @@ app.post("/loginSubmit", async (req, res) => {
     req.session.cookie.maxAge = expireTime;
     res.redirect("/members");
   } else {
-    res.render("errorMessage", {active: "none", errorId: 2, title: "Error"});
+    res.render("errorMessage", { active: "none", errorId: 2, title: "Error" });
     return;
   }
 });
@@ -109,13 +119,18 @@ app.post("/signupSubmit", async (req, res) => {
 
   const validationResult = schema.validate({ name, email, password });
   if (validationResult.error) {
-    res.render("errorMessage", {active: "none", errorId: 3, errorMsg: validationResult.error.message, title: "Error"});
+    res.render("errorMessage", {
+      active: "none",
+      errorId: 3,
+      errorMsg: validationResult.error.message,
+      title: "Error",
+    });
     return;
   }
   const existingUser = await userCollection.findOne({ email: email });
 
   if (existingUser) {
-    res.render("errorMessage", {active: "none", errorId: 4, title: "Error"});
+    res.render("errorMessage", { active: "none", errorId: 4, title: "Error" });
     return;
   }
 
@@ -134,7 +149,11 @@ app.post("/signupSubmit", async (req, res) => {
 
 app.get("/members", (req, res) => {
   if (req.session && req.session.authenticated) {
-    res.render("members", {name: req.session.name, active: "members", title: "Members"})
+    res.render("members", {
+      name: req.session.name,
+      active: "members",
+      title: "Members",
+    });
   } else {
     res.redirect("/");
   }
@@ -151,8 +170,17 @@ app.get("/admin", async (req, res) => {
     req.session.authenticated &&
     req.session.user_type === "admin"
   ) {
-    const result = await userCollection.find().project({name: 1, _id: 1}).toArray();
-    res.render("admin", {active: "admin", title: "Admin", users: result});
+    const result = await userCollection
+      .find()
+      .project({ name: 1, _id: 1 })
+      .toArray();
+    res.render("admin", { active: "admin", title: "Admin", users: result });
+  } else if (
+    req.session &&
+    req.session.authenticated &&
+    req.session.user_type === "user"
+  ) {
+    res.render("errorMessage", { active: "none", title: "Error", errorId: 5 });
   } else {
     res.redirect("/");
   }
@@ -163,7 +191,7 @@ app.post("/promote/:id", async (req, res) => {
 
   await userCollection.updateOne(
     { _id: new ObjectId(userId) },
-    { $set: { user_type: "admin" } }
+    { $set: { user_type: "admin" } },
   );
 
   res.redirect("/admin");
@@ -174,7 +202,7 @@ app.post("/demote/:id", async (req, res) => {
 
   await userCollection.updateOne(
     { _id: new ObjectId(userId) },
-    { $set: { user_type: "user" } }
+    { $set: { user_type: "user" } },
   );
 
   res.redirect("/admin");
@@ -184,7 +212,7 @@ app.use(express.static(__dirname + "/public"));
 
 app.use((req, res) => {
   res.status(404);
-  res.render("404", {title: 404, active: "none"});
+  res.render("404", { title: 404, active: "none" });
 });
 
 app.listen(PORT, () => {
