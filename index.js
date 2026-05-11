@@ -182,7 +182,7 @@ app.get("/admin", async (req, res) => {
   ) {
     res.render("errorMessage", { active: "none", title: "Error", errorId: 5 });
   } else {
-    res.redirect("/");
+    res.redirect("/login");
   }
 });
 
